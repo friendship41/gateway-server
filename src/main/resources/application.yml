@@ -1,0 +1,25 @@
+server:
+  port: 443
+  ssl:
+    key-store: classpath:keystore.p12
+    key-store-type: PKCS12
+    key-store-password: vmfhwprxm
+    key-alias: spring
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: member-server
+          uri: https://stage41.xyz:40001/
+          predicates:
+            - Path = /member_server/**
+
+
+logging:
+  level:
+    root: debug
+
+auth-server:
+  token_key:
+    url: https://stage41.xyz:42222/oauth/token_key
