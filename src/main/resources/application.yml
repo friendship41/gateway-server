@@ -1,5 +1,5 @@
 server:
-  port: 443
+  port: 4433
   ssl:
     key-store: classpath:keystore.p12
     key-store-type: PKCS12
@@ -13,12 +13,22 @@ spring:
         - id: member-server
           uri: https://stage41.xyz:40001/
           predicates:
-            - Path = /member_server/**
+            - Path=/member/**
+  profiles:
+    active: dev
 
 
 logging:
   level:
     root: debug
+    org:
+      springframework:
+        cloud:
+          gateway: DEBUG
+    reactor:
+      netty:
+        http:
+          client: DEBUG
 
 auth-server:
   token_key:

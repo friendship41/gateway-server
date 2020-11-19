@@ -1,23 +1,47 @@
 package com.friendship41.gatewayserver.filter
 
 import com.friendship41.gatewayserver.common.logger
-import org.springframework.cloud.gateway.filter.GatewayFilter
-import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory
+import org.springframework.cloud.gateway.filter.GatewayFilterChain
+import org.springframework.cloud.gateway.filter.GlobalFilter
+import org.springframework.core.Ordered
+import org.springframework.core.io.buffer.DataBuffer
+import org.springframework.http.server.reactive.ServerHttpRequest
+import org.springframework.http.server.reactive.ServerHttpRequestDecorator
 import org.springframework.stereotype.Component
+import org.springframework.web.filter.AbstractRequestLoggingFilter
+import org.springframework.web.server.ServerWebExchange
+import org.springframework.web.server.ServerWebExchangeDecorator
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.nio.channels.Channels
 
-const val LOG_LEVEL_DEBUG = "DEBUG"
-
-// custom filter를 config로 찍어낼 수 있게 하는 클래스
 @Component
-class LogFilter: AbstractGatewayFilterFactory<LogFilter.Config>() {
-    override fun apply(config: Config?): GatewayFilter = GatewayFilter { exchange, chain ->
-        if (config?.logLevel?.toUpperCase() == LOG_LEVEL_DEBUG) {
-            logger().debug("is Debug mode")
-        }
-        chain.filter(exchange).then()
+class LogFilter: GlobalFilter, Ordered {
+    override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {
+        return chain.filter(object: ServerWebExchangeDecorator(exchange) {
+            override fun getRequest(): ServerHttpRequest = object:ServerHttpRequestDecorator(exchange.request) {
+                override fun getBody(): Flux<DataBuffer> {
+                    val byteArrayOutputStream = ByteArrayOutputStream()
+                    return super.getBody().map {
+                        try {
+                            Channels.newChannel(byteArrayOutputStream).write(it.asByteBuffer().asReadOnlyBuffer())
+                        } catch (e: IOException) { logger().error("unable to log request", e) }
+                        it
+                    }.doOnComplete {
+                        logger().info("Req in <<< ${request.methodValue} ${request.uri} " +
+                                "\nhost ${request.remoteAddress?.hostString}" +
+                                "\nbody:\n ${String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8)}")
+                    }
+                }
+            }
+        }).then(Mono.fromRunnable {
+            logger().info("Res >>> ${exchange.response}")
+        })
     }
 
-    data class Config (
-            var logLevel: String
-    )
+    override fun getOrder(): Int {
+        return -1
+    }
 }
