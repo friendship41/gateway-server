@@ -44,27 +44,27 @@ class JwtTokenProvider {
                 .parseClaimsJws(jwtToken)
     } catch (e: SignatureException) {
         logger().error("Invalid JWT signature: $jwtToken")
-        throw Exception()
+        throw e
 //        throw BadCredentialsException("Invalid JWT signature: $jwtToken")
     } catch (e: MalformedJwtException) {
         logger().error("Invalid token: $jwtToken")
-        throw Exception()
+        throw e
 //        throw BadCredentialsException("Invalid token: $jwtToken")
     } catch (e: ExpiredJwtException) {
         logger().error("Expired JWT token: $jwtToken")
-        throw Exception()
+        throw e
 //        throw BadCredentialsException("Expired JWT token: $jwtToken")
     } catch (e: UnsupportedJwtException) {
         logger().error("Unsupported JWT token: $jwtToken")
-        throw Exception()
+        throw e
 //        throw BadCredentialsException("Unsupported JWT token: $jwtToken")
     } catch (e: IllegalArgumentException) {
         logger().error("JWT token compact of handler are invalid: $jwtToken")
-        throw Exception()
+        throw e
 //        throw BadCredentialsException("JWT token compact of handler are invalid: $jwtToken")
     } catch (e: Exception) {
         logger().error("Invalid token: $jwtToken")
-        throw Exception()
+        throw e
 //        throw BadCredentialsException("Invalid token: $jwtToken")
     }
 
