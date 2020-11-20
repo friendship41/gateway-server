@@ -11,12 +11,26 @@ spring:
     gateway:
       routes:
         - id: member-server
-          uri: https://stage41.xyz:40001/
+          uri: https://stage41.xyz:40001
           predicates:
-            - Path=/member/**
+            - Path=/travel/member/**
+          filters:
+            - RewritePath=/travel/(?<path>.*),/$\{path}
+            - name: JwtAuth
+              args:
+                excludePaths: /member
   profiles:
     active: dev
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - "gateway"
+  endpoint:
+    gateway:
+      enabled: true
 
 logging:
   level:

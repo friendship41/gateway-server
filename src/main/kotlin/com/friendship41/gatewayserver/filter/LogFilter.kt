@@ -8,7 +8,6 @@ import org.springframework.core.io.buffer.DataBuffer
 import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator
 import org.springframework.stereotype.Component
-import org.springframework.web.filter.AbstractRequestLoggingFilter
 import org.springframework.web.server.ServerWebExchange
 import org.springframework.web.server.ServerWebExchangeDecorator
 import reactor.core.publisher.Flux
@@ -31,13 +30,16 @@ class LogFilter: GlobalFilter, Ordered {
                         it
                     }.doOnComplete {
                         logger().info("Req in <<< ${request.methodValue} ${request.uri} " +
-                                "\nhost ${request.remoteAddress?.hostString}" +
-                                "\nbody:\n ${String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8)}")
+                                "host ${request.remoteAddress?.hostString}" +
+                                if (byteArrayOutputStream.size() > 0) {
+                                    "\nbody:\n ${String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8)}"
+                                } else "")
+
                     }
                 }
             }
         }).then(Mono.fromRunnable {
-            logger().info("Res >>> ${exchange.response}")
+            logger().info("Res >>> ${exchange.response.statusCode}")
         })
     }
 
